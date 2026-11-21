@@ -2,64 +2,155 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>소리 버튼</title>
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #f2f2f2;
-      font-family: sans-serif;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Piano</title>
 
-    button {
-      width: 180px;
-      height: 180px;
-      border: none;
-      border-radius: 50%;
-      background: #3478f6;
-      color: white;
-      font-size: 28px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-    }
+<style>
+* {
+  box-sizing: border-box;
+}
 
-    button:active {
-      transform: scale(0.95);
-    }
-  </style>
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: #171923;
+  font-family: sans-serif;
+  color: white;
+}
+
+h1 {
+  margin-bottom: 10px;
+}
+
+p {
+  color: #aaa;
+  margin-bottom: 45px;
+}
+
+.piano {
+  display: flex;
+  position: relative;
+  width: min(95vw, 700px);
+  height: 260px;
+}
+
+.key {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  padding-bottom: 20px;
+  border-radius: 0 0 8px 8px;
+  font-weight: bold;
+}
+
+.white {
+  flex: 1;
+  background: white;
+  color: #222;
+  border: 1px solid #aaa;
+  height: 100%;
+}
+
+.white:active,
+.white.active {
+  background: #bcd5ff;
+}
+
+.black {
+  position: absolute;
+  top: 0;
+  height: 62%;
+  width: 9%;
+  background: #111;
+  color: white;
+  z-index: 2;
+  border: 1px solid #555;
+  border-radius: 0 0 6px 6px;
+}
+
+.black:active,
+.black.active {
+  background: #444;
+}
+
+footer {
+  margin-top: 35px;
+  color: #888;
+  font-size: 13px;
+}
+</style>
 </head>
+
 <body>
 
-  <button onclick="playSound()">눌러봐!</button>
+<h1>🎹 Mini Piano</h1>
+<p>건반을 눌러 연주해 보세요!</p>
 
-  <script>
-    function playSound() {
-      const audio = new AudioContext();
-      const oscillator = audio.createOscillator();
-      const gain = audio.createGain();
+<div class="piano" id="piano">
+  <div class="key white" data-note="261.63">도</div>
+  <div class="key white" data-note="293.66">레</div>
+  <div class="key white" data-note="329.63">미</div>
+  <div class="key white" data-note="349.23">파</div>
+  <div class="key white" data-note="392">솔</div>
+  <div class="key white" data-note="440">라</div>
+  <div class="key white" data-note="493.88">시</div>
+  <div class="key white" data-note="523.25">도</div>
 
-      oscillator.type = "sine";
-      oscillator.frequency.value = 440;
+  <div class="key black" data-note="277.18" style="left:9.5%">도#</div>
+  <div class="key black" data-note="311.13" style="left:23.5%">레#</div>
+  <div class="key black" data-note="369.99" style="left:51.5%">파#</div>
+  <div class="key black" data-note="415.30" style="left:65.5%">솔#</div>
+  <div class="key black" data-note="466.16" style="left:79.5%">라#</div>
+</div>
 
-      oscillator.connect(gain);
-      gain.connect(audio.destination);
+<footer>MINI PIANO · VERSION 2.0</footer>
 
-      oscillator.start();
-      gain.gain.setValueAtTime(0.3, audio.currentTime);
-      gain.gain.exponentialRampToValueAtTime(
-        0.001,
-        audio.currentTime + 0.5
-      );
+<script>
+const audio = new (window.AudioContext || window.webkitAudioContext)();
 
-      oscillator.stop(audio.currentTime + 0.5);
-    }
-  </script>
+function playNote(frequency, key) {
+  if (audio.state === "suspended") {
+    audio.resume();
+  }
+
+  const oscillator = audio.createOscillator();
+  const gain = audio.createGain();
+
+  oscillator.type = "triangle";
+  oscillator.frequency.value = frequency;
+
+  gain.gain.setValueAtTime(0.25, audio.currentTime);
+  gain.gain.exponentialRampToValueAtTime(
+    0.001,
+    audio.currentTime + 0.8
+  );
+
+  oscillator.connect(gain);
+  gain.connect(audio.destination);
+
+  oscillator.start();
+  oscillator.stop(audio.currentTime + 0.8);
+
+  key.classList.add("active");
+
+  setTimeout(() => {
+    key.classList.remove("active");
+  }, 150);
+}
+
+document.querySelectorAll(".key").forEach(key => {
+  key.addEventListener("pointerdown", () => {
+    playNote(Number(key.dataset.note), key);
+  });
+});
+</script>
 
 </body>
 </html>
